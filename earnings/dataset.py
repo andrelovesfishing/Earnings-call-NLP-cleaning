@@ -120,8 +120,10 @@ def load_calls(
         if pd.isna(row["call_date"]):
             dropped.append({**row, "drop_reason": "no usable call date in the transcript header"})
             continue
+        # Zero Q&A chunks means no analyst was recognised, not that the file was
+        # empty: these transcripts parse fine and do contain a Q&A. ADR 0006.
         if row["n_chunks"] == 0:
-            dropped.append({**row, "drop_reason": "no speaker turns parsed"})
+            dropped.append({**row, "drop_reason": "no analyst turn found"})
             continue
 
         report = payload.get("parse_report", {})
