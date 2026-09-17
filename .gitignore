@@ -1,3 +1,15 @@
-__pycache__/*
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+.venv/
 
+# Transcripts are licensed content from Quartr and are not redistributed here.
 transcripts*/
+
+# Derived artefacts, rebuilt by the experiments.
+data/
+
+# Private working notes, not part of the project.
+g-research_talking_points.md
+earnings_call_finetune.ipynb
