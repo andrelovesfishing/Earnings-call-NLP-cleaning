@@ -58,7 +58,7 @@ The headline test, fixed in advance: mean turn sentiment against 5-day drift.
 IC -0.009    95% CI [-0.162, +0.144]    p = 0.90    n = 165
 ```
 
-That is a zero, and direction agrees: 48.5% of calls called correctly against a 53.3% base rate.
+That's a zero, and direction agrees: 48.5% called correctly against a naive 53.3% base rate.
 
 Five days was not simply the wrong window:
 
