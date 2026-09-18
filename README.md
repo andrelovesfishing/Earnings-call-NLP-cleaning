@@ -8,7 +8,7 @@ The 165 measured result, nothing of value: IC -0.009, p = 0.90.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/figures/power-curve-dark.svg">
-  <img alt="Smallest detectable effect against sample size. The curve falls steeply from about 0.59 at 20 calls to 0.22 at 165 calls, then flattens: reaching an IC of 0.21 needs roughly 175 calls, and going meaningfully below that needs many hundreds. This study sits at 165 calls, detecting 0.22." src="docs/figures/power-curve-light.svg" width="720">
+  <img alt="Smallest detectable effect against sample size, from 20 to 3,300 calls. The curve falls steeply and then flattens. This study sits at 165 calls, detecting 0.22. Detecting an IC of 0.05, the size worth finding, takes 3,138 calls." src="docs/figures/power-curve-light.svg" width="720">
 </picture>
 
 ## Overview
@@ -33,6 +33,14 @@ Turning that idea into a number takes four steps.
 
 ## Results
 
+### What the sample could detect
+
+The power calculation came before the model ran. At 165 calls, the smallest correlation this test can reliably detect is **0.22**. A signal worth trading is usually an order of magnitude smaller, around 0.05, and detecting one that size would take **3,138 calls**.
+
+That is the project's main output. It says this sample was never going to settle whether the effect exists, and it says what a version that could would need.
+
+### What it measured
+
 The headline test, fixed in advance: mean turn sentiment against 5-day drift.
 
 ```
@@ -56,6 +64,8 @@ Nothing appears anywhere else either:
 
 The alternatives are listed because I ran them, not so the best one could be promoted. The plain mean was the headline before I saw any of it. Full output in [docs/headline.md](docs/headline.md).
 
+None of this rules out an effect of the size that would actually matter. With a detectable floor of 0.22, it rules out a large one.
+
 ## What I got wrong
 
 The Q&A boundary was the thing that nearly ruined this, twice.
@@ -70,8 +80,7 @@ Both bugs were silent. Nothing errored and every number looked plausible, which 
 
 ## Limitations
 
-- **Five companies.** 3M, Deere, Carnival, Alcoa and Stellantis, 2011 to 2026. That is a handful of names over a long stretch, not a cross-section, and it is the binding constraint on everything above.
-- **165 calls can only see an effect of 0.22.** Getting down to 0.05 takes about 3,100, which means an automated transcript source rather than hand-collected PDFs.
+- **Five companies, 165 calls.** 3M, Deere, Carnival, Alcoa and Stellantis, 2011 to 2026. A handful of names over a long stretch, not a cross-section. The sample size is the binding constraint on everything above, and getting it to 3,138 means an automated transcript source rather than hand-collected PDFs.
 - **Nine calls are still dropped** because their Q&A boundary can't be located, eight of them Stellantis. Fixing the parser to segment those speakers properly would recover them.
 - **No earnings-surprise control.** Tone and the size of the beat or miss move together, so some of what is being measured here is probably the surprise, not the tone.
 - **FinBERT is used as it comes.** With fewer than 200 calls there is nothing to fine-tune on, and a train/test split would have cost most of the sample. [ADR 0001](docs/adr/0001-no-fine-tuning.md).

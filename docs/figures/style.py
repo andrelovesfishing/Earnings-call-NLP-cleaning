@@ -2,10 +2,10 @@
 
 THEMES = {
     "light": dict(surface="#fcfcfb", ink="#0b0b0b", ink2="#52514e", muted="#898781",
-                  grid="#e1e0d9", base="#c3c2b7", band="#e8e7e0", accent="#2a78d6",
+                  grid="#e1e0d9", base="#c3c2b7", band="#e8e7e0", accent="#b8860b",
                   null="#b4b2a9"),
     "dark": dict(surface="#1a1a19", ink="#ffffff", ink2="#c3c2b7", muted="#898781",
-                 grid="#2c2c2a", base="#4a4a46", band="#26262400", accent="#3987e5",
+                 grid="#2c2c2a", base="#4a4a46", band="#26262400", accent="#ffd23f",
                  null="#6f6e69"),
 }
 FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"

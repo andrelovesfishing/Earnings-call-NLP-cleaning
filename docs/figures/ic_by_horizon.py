@@ -15,8 +15,8 @@ from experiments.common import HORIZONS, PRIMARY_SCORE  # noqa: E402
 from experiments.headline import load_scored_calls  # noqa: E402
 from style import frame, text, write  # noqa: E402
 
-W, H = 720, 340
-PAD_L, PAD_R, PAD_T, PAD_B = 96, 28, 44, 50
+W, H = 720, 376
+PAD_L, PAD_R, PAD_T, PAD_B = 96, 28, 44, 86
 X0, X1 = -0.5, 0.5
 
 
@@ -40,7 +40,7 @@ def render(t, table):
     x_zero = px(0.0)
     out.append(f'<line x1="{x_zero:.1f}" y1="{PAD_T}" x2="{x_zero:.1f}" y2="{H - PAD_B}" '
                f'stroke="{t["ink2"]}" stroke-width="1.5"/>')
-    out.append(text((PAD_L + W - PAD_R) / 2, H - 12, "information coefficient (rank correlation)", t,
+    out.append(text((PAD_L + W - PAD_R) / 2, H - PAD_B + 40, "information coefficient (rank correlation)", t,
                     size=11, color="muted", anchor="middle"))
 
     for i, row in table.iterrows():
@@ -54,7 +54,7 @@ def render(t, table):
         out.append(text(W - PAD_R, y - 12, f"IC {row.ic:+.2f}   p = {row.p_value:.2f}", t,
                         size=11, color="muted", anchor="end"))
 
-    out.append(text(PAD_L - 34, H - 30, "Bars are 95% confidence intervals. Every one crosses zero.", t,
+    out.append(text(PAD_L - 34, H - 14, "Bars are 95% confidence intervals. Every one crosses zero.", t,
                     size=11, color="ink2"))
     out.append("</svg>")
     return "".join(out)
