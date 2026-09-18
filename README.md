@@ -13,15 +13,15 @@ The 165 measured result, nothing of value: IC -0.009, p = 0.90.
 
 ## Overview
 
-- Parsed 174 PDF transcripts into speaker turns, keeping who was talking and in what role.
-- Scored only the Q&A, turn by turn, because prepared remarks are written days ahead by the investor-relations team.
-- Measured drift over the following days rather than the jump on the day, stripped out the market, and scaled by each stock's own volatility.
-- Fixed the headline test and the power calculation before running the model once, so there was no room to go looking for a result afterwards.
-- 77 tests, and every design decision written up in [docs/adr](docs/adr/).
+- Parsed 174 PDF transcripts into speaker turns, tagged with timestamps, who was talking, and what their role was
+- Scored only the Q&A, turn by turn, because prepared remarks are written days ahead by the investor-relations team
+- Measured drift over the following days rather than the jump on the day, stripped out the market, and scaled by each stock's own volatility
+- Fixed the headline test and the power calculation before running the model for an honest result
+- 77 tests, design decisions written up in [docs/adr](docs/adr/).
 
 ## How it works
 
-Turning that idea into a number takes four steps.
+Four distinct steps:
 
 **Score the right part of the call.** Prepared remarks are drafted in advance and read aloud, so their tone measures the IR team's writing, not the business. Only the Q&A is worth scoring. Finding where it starts is harder than it sounds, and getting it wrong quietly wrecks the result — see below.
 
@@ -35,9 +35,20 @@ Turning that idea into a number takes four steps.
 
 ### What the sample could detect
 
-The power calculation came before the model ran. At 165 calls, the smallest correlation this test can reliably detect is **0.22**. A signal worth trading is usually an order of magnitude smaller, around 0.05, and detecting one that size would take **3,138 calls**.
+A correlation has to clear a noise floor set by how many calls you have. Fisher's transform makes that floor explicit: an IC is roughly normal with standard error `1/sqrt(n-3)`, so the smallest one a test catches 80% of the time at 5% significance is
 
-That is the project's main output. It says this sample was never going to settle whether the effect exists, and it says what a version that could would need.
+```
+IC_min = tanh( (z_0.975 + z_0.80) / sqrt(n - 3) )
+       = tanh( 2.80 / sqrt(n - 3) )
+```
+
+At n = 165 that is `tanh(2.80 / 12.73)` = **0.217**. Rearranged, it answers the question in the title:
+
+```
+n = 3 + ( 2.80 / artanh(IC) )^2
+```
+
+A signal worth trading sits nearer 0.05, which needs **3,138 calls** — nineteen times the sample I had. Everything below is measured against that floor.
 
 ### What it measured
 
@@ -47,43 +58,38 @@ The headline test, fixed in advance: mean turn sentiment against 5-day drift.
 IC -0.009    95% CI [-0.162, +0.144]    p = 0.90    n = 165
 ```
 
-Direction alone is no better: 48.5% of calls called correctly, against a 53.3% base rate.
+That is a zero, and direction agrees: 48.5% of calls called correctly against a 53.3% base rate.
+
+Five days was not simply the wrong window:
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/figures/ic-by-horizon-dark.svg">
   <img alt="Information coefficient at four horizons with 95% confidence intervals. 1 day +0.01, 3 days -0.06, 5 days -0.01, 10 days +0.01. Every interval spans roughly -0.2 to +0.16 and every one crosses zero." src="docs/figures/ic-by-horizon-light.svg" width="720">
 </picture>
 
-Nothing appears anywhere else either:
+Nor does it hide in a different average, or in one company:
 
 | Cut | Result |
 |---|---|
-| Other horizons | IC between -0.06 and +0.01, every p above 0.45 |
-| Other ways of averaging turns | word-weighted +0.03, management only +0.03, analysts only -0.05 |
+| Ways of averaging turns | word-weighted +0.03, management only +0.03, analysts only -0.05 |
 | Per company | 3M is the largest at -0.25 (p = 0.10), which becomes p = 0.52 once corrected for testing five names |
 
-The alternatives are listed because I ran them, not so the best one could be promoted. The plain mean was the headline before I saw any of it. Full output in [docs/headline.md](docs/headline.md).
+The alternatives are listed because I ran them, not so the best one could be promoted. The plain mean was the headline before I saw any of it (see [docs/headline.md](docs/headline.md)).
 
-None of this rules out an effect of the size that would actually matter. With a detectable floor of 0.22, it rules out a large one.
+None of these alternatives rules out an effect of the size that would actually matter. With a detectable floor of 0.22, a really large signal is needed.
 
-## What I got wrong
+## A bug I encountered
 
-The Q&A boundary was the thing that nearly ruined this, twice.
+Two versions of the Q&A boundary would have failed silently if I did not review results at each step. The first parser looked for the operator's handover phrase. This phrase was also often used at the start, and so many whole transcripts were mixed into the dataset (79 of 174). I replaced it with a structural rule based on the first analyst turn. That is more reliable than matching a particular phrase, but it still drops 9 calls because their analysts aren't actually titled "Analyst".
 
-The first version looked for the operator's handover phrase. The wording varies constantly, and the operator also mentions the Q&A in the opening boilerplate, so the match often landed at the top of the call. When it failed entirely, it fell back to scoring the whole transcript. That fallback fired on 79 of 174 calls. Half the dataset was scored on prepared remarks plus Q&A and half on Q&A alone, and nothing about the output looked wrong. Prepared remarks are relentlessly upbeat, so this added a company-specific bias to the exact thing being measured.
-
-I replaced it with a structural rule: the Q&A starts at the first analyst turn, because who is speaking is a fact in the document, not a guess about phrasing. That was a real improvement, and it still had a bug. It identified analysts by looking for the word "Analyst" in their job title, and plenty of analysts don't have it — "Senior Director, Bank of America", "Head of European Automotive Investment Research, Goldman Sachs". Nine calls were dropped as having no Q&A at all. Eight were Stellantis, and specifically its half-year and full-year calls.
-
-That is the part worth noticing. The loss wasn't random: it landed on one company and one kind of call, which is exactly the bias the rule was written to remove. The run had been reporting them as "no speaker turns parsed", which was also false — those transcripts parse fine. Both are fixed, the drops are still reported on every run, and [ADR 0006](docs/adr/0006-qa-boundary-is-structural.md) now records what they actually are.
-
-Both bugs were silent. Nothing errored and every number looked plausible, which is why the count of what gets dropped, and why, is printed on every run.
+Going into this project, I did not know what to expect from the number I was looking for, so both errors likely would produce plausible results. The pattern in the dropped calls is what exposed the second problem: 8 of the 9 are Stellantis half-year and full-year calls. The parser wasn't just losing a few random observations; it was losing a particular company and type of call. Both issues are now fixed, and every run reports how many calls were dropped and why.
 
 ## Limitations
 
-- **Five companies, 165 calls.** 3M, Deere, Carnival, Alcoa and Stellantis, 2011 to 2026. A handful of names over a long stretch, not a cross-section. The sample size is the binding constraint on everything above, and getting it to 3,138 means an automated transcript source rather than hand-collected PDFs.
-- **Nine calls are still dropped** because their Q&A boundary can't be located, eight of them Stellantis. Fixing the parser to segment those speakers properly would recover them.
-- **No earnings-surprise control.** Tone and the size of the beat or miss move together, so some of what is being measured here is probably the surprise, not the tone.
-- **FinBERT is used as it comes.** With fewer than 200 calls there is nothing to fine-tune on, and a train/test split would have cost most of the sample. [ADR 0001](docs/adr/0001-no-fine-tuning.md).
+- **Five companies, 165 calls.** The dataset covers 3M, Deere, Carnival, Alcoa and Stellantis from 2011 to 2026. That is a handful of names spread over a long period, not a broad cross-section. I sourced the PDFs manually from Quartr without access to their API; in hindsight this was a very inefficient method and I should have spent more time looking into alternative data sourcing options
+- **Nine calls are still dropped** Their Q&A boundary cannot currently be located, and eight of the nine are Stellantis. The transcripts themselves parse correctly; it is the speaker identification that fails. Fixing that would recover those observations
+- **No earnings-surprise control.** Tone tends to move with the size of the earnings beat or miss, so some of the relationship being measured could be the earnings surprise rather than the tone itself. I have not separated the two
+- **FinBERT is used unchanged.** With fewer than 200 calls there is nothing to fine-tune on, and a train/test split would have cost most of the sample. [ADR 0001](docs/adr/0001-no-fine-tuning.md).
 
 ## What I'd do next
 
