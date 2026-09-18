@@ -1,8 +1,10 @@
 # How many earnings calls would it take to know if tone predicts returns?
 
-I scored the Q&A section of 165 earnings calls with FinBERT and tested the result against what each stock did next. The answer was no: a correlation of -0.009, which is nothing.
+Executives answer analysts unscripted for half an hour, and the tone of those answers might carry something the market hasn't priced yet. Any effect like that would be small, and small effects need a lot of calls before they show up at all. So I tried to quantify how many.
 
-The more useful number is the other one. With 165 calls, the smallest effect I could reliably have detected was 0.22. Signals that actually get traded are usually an order of magnitude smaller than that. So this sample was never going to settle the question. The experiment's real output is knowing what it would take: roughly 3,100 calls to detect an effect of 0.05.
+I started by taking 165 earnings calls and tested how strong a return signal I could get from the tone of the Q&A. At that sample size, the test can only reliably detect a correlation of 0.22 or larger. To have a realistic shot at seeing a signal worth trading, the sample would need to be roughly 3,100 calls.
+
+The 165 measured result, nothing of value: IC -0.009, p = 0.90.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/figures/power-curve-dark.svg">
@@ -19,9 +21,7 @@ The more useful number is the other one. With 165 calls, the smallest effect I c
 
 ## How it works
 
-The idea is that executives answering unscripted questions might give something away that the prepared statement doesn't. Analysts push, management answers off the cuff, and the tone of those answers may carry information the market hasn't priced yet.
-
-Turning that into a number takes four steps.
+Turning that idea into a number takes four steps.
 
 **Score the right part of the call.** Prepared remarks are drafted in advance and read aloud, so their tone measures the IR team's writing, not the business. Only the Q&A is worth scoring. Finding where it starts is harder than it sounds, and getting it wrong quietly wrecks the result — see below.
 
